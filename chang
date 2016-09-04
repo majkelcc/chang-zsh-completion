@@ -1,0 +1,30 @@
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit
+
+function __chang() {
+  local bindir=${PWD}/.chang/bin
+
+  local -a commands
+  commands=${COMP_WORDS[@]:1:$(( COMP_CWORD > 0 ? COMP_CWORD - 1 : 0 ))}
+  local current=${COMP_WORDS[COMP_CWORD]}
+
+  local script="${bindir}"
+  local command
+  for command in ${commands[@]}; do
+    script="${script}/${command}"
+  done
+  COMPREPLY=()
+
+  if [[ -d $script ]]; then
+    local -a executables
+    local -a completions
+    executables=($(find ${script} -perm +111 -type f -or -type l))
+    completions=(${executables[@]#$script/})
+    local -a del
+    del=($command)
+    completions=(${completions[@]%%/*})
+    COMPREPLY=($(compgen -W "${completions[*]/$del}" -- ${current}))
+  fi
+}
+
+complete -F __chang chang
